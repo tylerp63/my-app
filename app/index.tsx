@@ -1,7 +1,7 @@
 import { useSQLiteContext } from "expo-sqlite";
 import { useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import Timer from "../components/Timer";
+import Timer from "./components/Timer";
 export default function Index() {
   type UserType = {
     id: number;
