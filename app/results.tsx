@@ -15,7 +15,7 @@ export default function Results() {
           gap: 17,
         }}
       >
-        <Text style={{ fontSize: "15" }}>Session Title</Text>
+        <Text style={{ fontSize: 15 }}>Session Title</Text>
         <Text style={styles.timerText}>00:00</Text>
         <Pressable>
           <Text style={styles.button}>Task List</Text>

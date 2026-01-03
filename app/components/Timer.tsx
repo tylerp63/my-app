@@ -1,9 +1,7 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-type session = {
-  id: string;
+import { supabase } from "../utils/supabase";
+type studySession = {
   started_at: string;
   ended_at: string;
   duration_sec: number;
@@ -14,70 +12,36 @@ const Timer = () => {
   const [startTimeMs, setStartTimeMs] = useState<number | null>(null);
   const [accumulatedSec, setAccumulatedSec] = useState(0);
   const [nowMs, setNowMs] = useState(Date.now());
-  const [sessions, setSessions] = useState<session[]>([]);
 
-  const { id } = useLocalSearchParams();
+  // Supabase logic
+  const startedAt =
+    startTimeMs !== null ? new Date(startTimeMs).toISOString() : "";
+  const endedAt = new Date().toISOString();
 
-  const db = useSQLiteContext();
-
-  const loadData = async () => {
-    if (!id) return;
-    const result = await db.getFirstAsync<session>(
-      `SELECT * FROM study_sessions WHERE id = ?`,
-      [String(id)]
-    );
-    // If you're opening an existing session, you can hydrate UI state here later.
-    console.log("Loaded session:", result);
-  };
-
-  const loadSessions = async () => {
-    try {
-      const rows = await db.getAllAsync<session>(
-        `SELECT * FROM study_sessions ORDER BY ended_at DESC LIMIT 50`
-      );
-      setSessions(rows ?? []);
-    } catch (error) {
-      console.error("Failed to load sessions", error);
+  let elapsedSeconds = accumulatedSec;
+  if (status === "running" && startTimeMs !== null) {
+    elapsedSeconds += Math.floor((nowMs - startTimeMs) / 1000);
+    if (elapsedSeconds < 0) {
+      elapsedSeconds = 0;
     }
+  }
+  // Supabase logic for saving session (insert Session)
+  const savedSession = {
+    started_at: startedAt,
+    ended_at: endedAt,
+    duration_sec: elapsedSeconds,
   };
-
-  useEffect(() => {
-    loadData();
-    loadSessions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
 
   const handleSave = async () => {
-    try {
-      // Your table schema requires `id` (TEXT PRIMARY KEY NOT NULL)
-      const sessionId = id ? String(id) : String(Date.now());
+    const { data, error } = await supabase
+      .from("study_sessions")
+      .insert<studySession>(savedSession);
+    console.log(data);
 
-      // Persist times as ISO strings to match TEXT columns
-      const startedAtIso = startTimeMs
-        ? new Date(startTimeMs).toISOString()
-        : new Date().toISOString();
-      const endedAtIso = new Date().toISOString();
-
-      const response = await db.runAsync(
-        `INSERT OR REPLACE INTO study_sessions
-         (id, started_at, ended_at, duration_sec)
-         VALUES (?, ?, ?, ?)`,
-        [
-          sessionId,
-          startedAtIso,
-          endedAtIso,
-          Math.max(0, Math.floor(elapsedSeconds)),
-        ]
-      );
-
-      console.log("Session saved successfully:", response?.changes);
-      router.push("/results");
-      await loadSessions();
-    } catch (error) {
-      console.error("Failed to save session", error);
+    if (error) {
+      console.log("Error saving session:", error);
     }
   };
-
   useEffect(() => {
     if (status !== "running") return;
 
@@ -87,14 +51,6 @@ const Timer = () => {
 
     return () => clearInterval(interval);
   }, [status]);
-
-  let elapsedSeconds = accumulatedSec;
-  if (status === "running" && startTimeMs !== null) {
-    elapsedSeconds += Math.floor((nowMs - startTimeMs) / 1000);
-    if (elapsedSeconds < 0) {
-      elapsedSeconds = 0;
-    }
-  }
 
   const start = () => {
     setStartTimeMs(Date.now());

@@ -1,31 +1,31 @@
-import { useSQLiteContext } from "expo-sqlite";
-import { useState } from "react";
+import { Session } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import Timer from "../components/Timer";
-export default function Index() {
-  type UserType = {
-    id: number;
-    started_at: string;
-    ended_at: string;
-    duration_sec: number;
-  };
-  const [data, setData] = useState<UserType[]>([]);
+import Account from "../components/Account";
+import Auth from "../components/Auth";
+import { supabase } from "../utils/supabase";
 
-  const db = useSQLiteContext();
+export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
 
-  const loadData = async () => {
-    const result = await db.getAllAsync<UserType>(
-      "SELECT * FROM study_sessions;"
-    );
-    setData(result);
-  };
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
 
   return (
-    <>
-      <View style={styles.container}>
-        <Timer />
-      </View>
-    </>
+    <View>
+      {session && session.user ? (
+        <Account key={session.user.id} session={session} />
+      ) : (
+        <Auth />
+      )}
+    </View>
   );
 }
 
