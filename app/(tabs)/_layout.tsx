@@ -13,6 +13,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "home-sharp" : "home-outline"}
@@ -26,6 +27,7 @@ export default function TabLayout() {
         name="stats"
         options={{
           title: "Stats",
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={

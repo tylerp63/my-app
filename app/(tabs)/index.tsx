@@ -1,6 +1,6 @@
 import { useSQLiteContext } from "expo-sqlite";
 import { useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Timer from "../components/Timer";
 export default function Index() {
   type UserType = {
@@ -21,19 +21,11 @@ export default function Index() {
   };
 
   return (
-    <View style={styles.container}>
-      <Timer />
-      <FlatList
-        data={data}
-        renderItem={({ item }) => {
-          return (
-            <View>
-              <Text>{item.duration_sec}</Text>
-            </View>
-          );
-        }}
-      />
-    </View>
+    <>
+      <View style={styles.container}>
+        <Timer />
+      </View>
+    </>
   );
 }
 

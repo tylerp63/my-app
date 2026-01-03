@@ -1,7 +1,7 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 type session = {
   id: string;
   started_at: string;
@@ -71,6 +71,7 @@ const Timer = () => {
       );
 
       console.log("Session saved successfully:", response?.changes);
+      router.push("/results");
       await loadSessions();
     } catch (error) {
       console.error("Failed to save session", error);
@@ -133,40 +134,54 @@ const Timer = () => {
     return d.toLocaleString();
   }
   return (
-    <View>
-      <Text style={styles.timerText}>{formatTime(elapsedSeconds)}</Text>
-      <Text style={styles.button}>
-        {status === "stopped" && <Text onPress={start}>Start</Text>}
-        {status === "running" && <Text onPress={pause}>Pause</Text>}
-        {status === "paused" && <Text onPress={resume}>Resume</Text>}
-        {status === "paused" && <Text onPress={handleSave}>Save</Text>}
-        {(status === "running" || status === "paused") && (
-          <Text onPress={end}>Reset</Text>
+    <>
+      <View style={styles.timerContainer}>
+        <Text style={styles.timerText}>{formatTime(elapsedSeconds)}</Text>
+      </View>
+      <View style={styles.container}>
+        {status === "stopped" && (
+          <Pressable onPress={start}>
+            <Text style={styles.button}>Start</Text>
+          </Pressable>
         )}
-      </Text>
 
-      <Text style={styles.sectionTitle}>Saved sessions</Text>
-      <FlatList
-        data={sessions}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No sessions saved yet.</Text>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.sessionRow}>
-            <Text style={styles.sessionText}>
-              Duration: {formatTime(item.duration_sec)}
-            </Text>
-            <Text style={styles.sessionText}>
-              Start: {formatIso(item.started_at)}
-            </Text>
-            <Text style={styles.sessionText}>
-              End: {formatIso(item.ended_at)}
-            </Text>
-          </View>
+        {status === "running" && (
+          <Pressable onPress={pause}>
+            <Text style={styles.button}>Pause</Text>
+          </Pressable>
         )}
-      />
-    </View>
+
+        {status === "paused" && (
+          <>
+            <Pressable onPress={resume}>
+              <Text style={styles.button}>Resume</Text>
+            </Pressable>
+
+            <Pressable onPress={handleSave}>
+              <Text style={styles.button}>Save</Text>
+            </Pressable>
+          </>
+        )}
+
+        {(status === "running" || status === "paused") && (
+          <Pressable onPress={end}>
+            <Text
+              style={{
+                minWidth: 240,
+                fontSize: 24,
+                textAlign: "center",
+                margin: 6,
+                padding: 24,
+                borderRadius: 50,
+                backgroundColor: "#DF9C9C",
+              }}
+            >
+              End Session
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </>
   );
 };
 
@@ -179,17 +194,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  timerContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
   text: {
     color: "#25292e",
   },
   timerText: {
-    fontSize: 40,
+    fontSize: 72,
     color: "#25292e",
   },
   button: {
-    fontSize: 20,
-    textDecorationLine: "underline",
+    fontSize: 24,
     color: "#25292e",
+    backgroundColor: "#D9D9D9",
+    textAlign: "center",
+    minWidth: 240,
+    margin: 6,
+    padding: 24,
+    borderRadius: 50,
   },
   sectionTitle: {
     marginTop: 16,
