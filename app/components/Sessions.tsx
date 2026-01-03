@@ -1,7 +1,6 @@
-import { useLocalSearchParams } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
+import { supabase } from "../utils/supabase";
 type session = {
   id: string;
   started_at: string;
@@ -10,50 +9,64 @@ type session = {
 };
 
 const Sessions = () => {
-  const [status, setStatus] = useState("stopped");
-  const [startTimeMs, setStartTimeMs] = useState<number | null>(null);
-  const [accumulatedSec, setAccumulatedSec] = useState(0);
-  const [nowMs, setNowMs] = useState(Date.now());
-  const [sessions, setSessions] = useState<session[]>([]);
+  //   const { id } = useLocalSearchParams();
 
-  const { id } = useLocalSearchParams();
+  //   const db = useSQLiteContext();
 
-  const db = useSQLiteContext();
+  //   const loadData = async () => {
+  //     if (!id) return;
+  //     const result = await db.getFirstAsync<session>(
+  //       `SELECT * FROM study_sessions WHERE id = ?`,
+  //       [String(id)]
+  //     );
+  //     // If you're opening an existing session, you can hydrate UI state here later.
+  //     console.log("Loaded session:", result);
+  //   };
 
-  const loadData = async () => {
-    if (!id) return;
-    const result = await db.getFirstAsync<session>(
-      `SELECT * FROM study_sessions WHERE id = ?`,
-      [String(id)]
-    );
-    // If you're opening an existing session, you can hydrate UI state here later.
-    console.log("Loaded session:", result);
-  };
+  //   const loadSessions = async () => {
+  //     try {
+  //       const rows = await db.getAllAsync<session>(
+  //         `SELECT * FROM study_sessions ORDER BY ended_at DESC LIMIT 50`
+  //       );
+  //       setSessions(rows ?? []);
+  //     } catch (error) {
+  //       console.error("Failed to load sessions", error);
+  //     }
+  //   };
 
-  const loadSessions = async () => {
-    try {
-      const rows = await db.getAllAsync<session>(
-        `SELECT * FROM study_sessions ORDER BY ended_at DESC LIMIT 50`
-      );
-      setSessions(rows ?? []);
-    } catch (error) {
-      console.error("Failed to load sessions", error);
-    }
-  };
+  //   useEffect(() => {
+  //     loadData();
+  //     loadSessions();
+  //     // eslint-disable-next-line react-hooks/exhaustive-deps
+  //   }, [id]);
 
+  const [studySessions, setSessions] = useState<session[]>([]);
   useEffect(() => {
-    loadData();
-    loadSessions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+    const getStudySessions = async () => {
+      try {
+        const { data: studySessions, error } = await supabase
+          .from("study_sessions")
+          .select();
 
-  let elapsedSeconds = accumulatedSec;
-  if (status === "running" && startTimeMs !== null) {
-    elapsedSeconds += Math.floor((nowMs - startTimeMs) / 1000);
-    if (elapsedSeconds < 0) {
-      elapsedSeconds = 0;
-    }
-  }
+        if (error) {
+          console.error("Error fetching sessions:", error.message);
+          return;
+        }
+
+        if (studySessions && studySessions.length > 0) {
+          setSessions(studySessions);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error("Error fetching sessions:", error.message);
+        } else {
+          console.error("Error fetching sessions:", error);
+        }
+      }
+    };
+
+    getStudySessions();
+  }, []);
 
   function formatTime(totalSeconds: number) {
     const minutes = Math.floor(totalSeconds / 60);
@@ -72,12 +85,12 @@ const Sessions = () => {
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.sectionTitle}>Recent sessions</Text>
+        <Text style={styles.sectionTitle}>Recent study sessions</Text>
         <FlatList
-          data={sessions}
+          data={studySessions}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No sessions saved yet.</Text>
+            <Text style={styles.emptyText}>No study sessions saved yet.</Text>
           }
           renderItem={({ item }) => (
             <View style={styles.sessionRow}>
