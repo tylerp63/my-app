@@ -12,7 +12,10 @@ import AuthProvider from "./providers/auth-provider";
 const config = createTamagui(defaultConfig);
 // Separate RootNavigator so we can access the AuthContext
 function RootNavigator() {
-  const { isLoggedIn } = useAuthContext();
+  const { isLoggedIn, isLoading } = useAuthContext();
+
+  // Prevent route guard flicker while Supabase session hydrates on reload.
+  if (isLoading) return null;
 
   return (
     <Stack

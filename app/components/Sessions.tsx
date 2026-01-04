@@ -64,8 +64,9 @@ const Sessions = () => {
   }
 
   return (
-    <>
-      <View style={{ width: "50%" }}>
+    <View style={styles.container}>
+      <View style={styles.heatmapSection}>
+        <Text style={styles.sectionTitle}>Study heatmap</Text>
         <WeeklyHeatMap
           data={startTimes}
           theme={{ scheme: "light" }}
@@ -74,33 +75,59 @@ const Sessions = () => {
           cellSize={36}
         />
       </View>
-      <FlatList
-        data={studySessions}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No study sessions saved yet.</Text>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.sessionRow}>
-            <Text style={styles.sessionText}>
-              Duration: {formatTime(item.duration_sec)}
-            </Text>
-            <Text style={styles.sessionText}>
-              Start: {formatIso(item.started_at)}
-            </Text>
-            <Text style={styles.sessionText}>
-              End: {formatIso(item.ended_at)}
-            </Text>
-          </View>
-        )}
-      />
-    </>
+
+      <View style={styles.listSection}>
+        <Text style={styles.sectionTitle}>Sessions</Text>
+        <FlatList
+          data={studySessions}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No study sessions saved yet.</Text>
+          }
+          renderItem={({ item }) => (
+            <View style={styles.sessionRow}>
+              <Text style={styles.sessionText}>
+                Duration: {formatTime(item.duration_sec)}
+              </Text>
+              <Text style={styles.sessionText}>
+                Start: {formatIso(item.started_at)}
+              </Text>
+              <Text style={styles.sessionText}>
+                End: {formatIso(item.ended_at)}
+              </Text>
+            </View>
+          )}
+        />
+      </View>
+    </View>
   );
 };
 
 export default Sessions;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    gap: 16,
+  },
+  heatmapSection: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+  },
+  listSection: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#25292e",
+    marginBottom: 8,
+  },
   text: {
     color: "#25292e",
   },
@@ -119,11 +146,11 @@ const styles = StyleSheet.create({
   sessionRow: {
     marginTop: 12,
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#2f3440",
+    borderRadius: 10,
+    backgroundColor: "#f3f4f6",
   },
   sessionText: {
-    color: "#fff",
+    color: "#25292e",
     marginTop: 4,
   },
 });
