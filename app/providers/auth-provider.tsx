@@ -4,7 +4,7 @@ import { AuthContext } from "../hooks/use-auth-context";
 import { supabase } from "../utils/supabase";
 
 export default function AuthProvider({ children }: PropsWithChildren) {
-  const [session, setSession] = useState<Session | undefined | null>();
+  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -22,7 +22,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         console.error("Error fetching session:", error);
       }
 
-      setSession(session);
+      setSession(session ?? null);
       setIsLoading(false);
     };
 
@@ -33,6 +33,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", { event: _event, session });
       setSession(session);
+      setIsLoading(false);
     });
 
     // Cleanup subscription on unmount
@@ -52,7 +53,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         session,
         isLoading,
         profile,
-        isLoggedIn: session != undefined,
+        isLoggedIn: !!session?.user,
       }}
     >
       {children}
