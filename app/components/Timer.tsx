@@ -1,83 +1,88 @@
 import { Button } from "@tamagui/button";
-import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import { View } from "tamagui";
 import { supabase } from "../utils/supabase";
-type studySession = {
+type StudySession = {
   started_at: string;
   ended_at: string;
   duration_sec: number;
 };
 
-const Timer = () => {
-  const [status, setStatus] = useState("stopped");
-  const [startTimeMs, setStartTimeMs] = useState<number | null>(null);
-  const [accumulatedSec, setAccumulatedSec] = useState(0);
-  const [nowMs, setNowMs] = useState(Date.now());
+type TimerState = "idle" | "running" | "paused";
+function Timer() {
+  const [timerState, setTimerState] = useState<TimerState>("idle");
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [segmentStart, setSegmentStart] = useState<number | null>(null);
+  const [carrySeconds, setCarrySeconds] = useState(0);
+  const [tick, setTick] = useState(Date.now());
 
-  // Supabase logic
-  const startedAt =
-    startTimeMs !== null ? new Date(startTimeMs).toISOString() : "";
-  const endedAt = new Date().toISOString();
-
-  let elapsedSeconds = accumulatedSec;
-  if (status === "running" && startTimeMs !== null) {
-    elapsedSeconds += Math.floor((nowMs - startTimeMs) / 1000);
-    if (elapsedSeconds < 0) {
-      elapsedSeconds = 0;
-    }
-  }
-  // Supabase logic for saving session (insert Session)
-  const savedSession = {
-    started_at: startedAt,
-    ended_at: endedAt,
-    duration_sec: elapsedSeconds,
-  };
-
-  const handleSave = async () => {
-    const { data, error } = await supabase
-      .from("study_sessions")
-      .insert<studySession>(savedSession);
-    console.log(data);
-    end();
-    router.push("/results");
-    if (error) {
-      console.log("Error saving session:", error);
-    }
-  };
+  // Ticker
   useEffect(() => {
-    if (status !== "running") return;
+    if (timerState !== "running") return;
 
-    const interval = setInterval(() => {
-      setNowMs(Date.now());
+    const id = setInterval(() => {
+      setTick(Date.now());
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [status]);
+    return () => clearInterval(id);
+  }, [timerState]);
 
-  const start = () => {
-    setStartTimeMs(Date.now());
-    setAccumulatedSec(0);
-    setStatus("running");
-  };
+  const totalSeconds =
+    timerState === "running" && segmentStart !== null
+      ? carrySeconds + Math.floor((tick - segmentStart) / 1000)
+      : carrySeconds;
 
-  const pause = () => {
-    setAccumulatedSec(elapsedSeconds);
-    setStatus("paused");
-  };
+  function beginSession() {
+    const now = Date.now();
+    setTick(now);
+    setSessionStart(now);
+    setSegmentStart(now);
+    setCarrySeconds(0);
+    setTimerState("running");
+  }
 
-  const resume = () => {
-    setStartTimeMs(Date.now());
-    setStatus("running");
-  };
+  function pauseSession() {
+    setCarrySeconds(totalSeconds);
+    setSegmentStart(null);
+    setTimerState("paused");
+  }
 
-  const end = async () => {
-    setAccumulatedSec(0);
-    setStartTimeMs(null);
-    setStatus("stopped");
-    return;
-  };
+  function resumeSession() {
+    const now = Date.now();
+    setTick(now);
+    setSegmentStart(now);
+    setTimerState("running");
+  }
+
+  function resetSession() {
+    setTimerState("idle");
+    setSessionStart(null);
+    setSegmentStart(null);
+    setCarrySeconds(0);
+  }
+
+  function buildSavePayload(sessionStart: number, totalSeconds: number) {
+    const startedIso = new Date(sessionStart).toISOString();
+    const endedIso = new Date().toISOString();
+
+    return {
+      started_at: startedIso,
+      ended_at: endedIso,
+      duration_sec: totalSeconds,
+    };
+  }
+
+  async function persistSession(payload: StudySession) {
+    const { error } = await supabase.from("study_sessions").insert(payload);
+
+    if (error) {
+      console.error("Save failed", error);
+      return false;
+    }
+
+    return true;
+  }
 
   function formatTime(totalSeconds: number) {
     const minutes = Math.floor(totalSeconds / 60);
@@ -88,40 +93,56 @@ const Timer = () => {
     return `${mm}:${ss}`;
   }
 
+  async function handleSave() {
+    // sessionStart can be null if the user hasn't started a session yet
+    if (sessionStart == null) {
+      console.warn("Cannot save: session has not started.");
+      return;
+    }
+
+    const payload: StudySession = buildSavePayload(sessionStart, totalSeconds);
+    const success = await persistSession(payload);
+
+    if (!success) return;
+
+    // On success, reset timer state
+    resetSession();
+  }
+
   return (
     <>
       <View style={styles.timerContainer}>
-        <Text style={styles.timerText}>{formatTime(elapsedSeconds)}</Text>
+        <Text style={styles.timerText}>{formatTime(totalSeconds)}</Text>
       </View>
       <View style={styles.buttonContainer}>
-        {status === "stopped" && (
+        {timerState === "idle" && (
           <Button
             marginTop={80}
             height={80}
             borderRadius={50}
             style={styles.buttonContainerButton}
-            onPress={start}
+            onPress={beginSession}
           >
             Start
           </Button>
         )}
 
-        {status === "running" && (
+        {timerState === "running" && (
           <Button
             borderRadius={50}
             style={styles.buttonContainerButton}
-            onPress={pause}
+            onPress={pauseSession}
           >
             Pause
           </Button>
         )}
 
-        {status === "paused" && (
+        {timerState === "paused" && (
           <>
             <Button
               borderRadius={50}
               style={styles.buttonContainerButton}
-              onPress={resume}
+              onPress={resumeSession}
             >
               Resume
             </Button>
@@ -136,12 +157,12 @@ const Timer = () => {
           </>
         )}
 
-        {(status === "running" || status === "paused") && (
+        {(timerState === "running" || timerState === "paused") && (
           <Button
             borderRadius={50}
             style={styles.buttonContainerButton}
             backgroundColor="#DF9C9C"
-            onPress={end}
+            onPress={resetSession}
           >
             End Session
           </Button>
@@ -149,7 +170,7 @@ const Timer = () => {
       </View>
     </>
   );
-};
+}
 
 export default Timer;
 
