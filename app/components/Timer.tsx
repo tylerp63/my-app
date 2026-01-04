@@ -118,6 +118,8 @@ function Timer() {
         {timerState === "idle" && (
           <Button
             marginTop={80}
+            boxShadow={"0 4px 8px rgba(0, 0, 0, 0.1)"}
+            fontSize={18}
             height={80}
             borderRadius={50}
             style={styles.buttonContainerButton}
@@ -130,6 +132,8 @@ function Timer() {
         {timerState === "running" && (
           <Button
             borderRadius={50}
+            fontSize={18}
+            boxShadow={"0 4px 8px rgba(0, 0, 0, 0.1)"}
             style={styles.buttonContainerButton}
             onPress={pauseSession}
           >
@@ -141,6 +145,8 @@ function Timer() {
           <>
             <Button
               borderRadius={50}
+              fontSize={18}
+              boxShadow={"0 4px 8px rgba(0, 0, 0, 0.1)"}
               style={styles.buttonContainerButton}
               onPress={resumeSession}
             >
@@ -149,6 +155,8 @@ function Timer() {
 
             <Button
               borderRadius={50}
+              fontSize={18}
+              boxShadow={"0 4px 8px rgba(0, 0, 0, 0.1)"}
               style={styles.buttonContainerButton}
               onPress={handleSave}
             >
@@ -160,6 +168,8 @@ function Timer() {
         {(timerState === "running" || timerState === "paused") && (
           <Button
             borderRadius={50}
+            fontSize={18}
+            boxShadow={"0 4px 8px rgba(0, 0, 0, 0.1)"}
             style={styles.buttonContainerButton}
             backgroundColor="#DF9C9C"
             onPress={resetSession}

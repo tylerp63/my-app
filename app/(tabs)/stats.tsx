@@ -13,7 +13,7 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    margin: 80,
+    marginTop: 80,
     gap: 20,
     flex: 1,
     backgroundColor: "#fff",

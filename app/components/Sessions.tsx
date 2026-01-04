@@ -1,6 +1,6 @@
 import { WeeklyHeatMap } from "@symbiot.dev/react-native-heatmap";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { supabase } from "../utils/supabase";
 type session = {
   id: string;
@@ -72,11 +72,13 @@ const Sessions = () => {
           theme={{ scheme: "light" }}
           startDate={now}
           endDate={current}
-          cellSize={36}
+          cellSize={40}
+          scrollable={false}
+          isSidebarVisible={true}
         />
       </View>
 
-      <View style={styles.listSection}>
+      {/* <View style={styles.listSection}>
         <Text style={styles.sectionTitle}>Sessions</Text>
         <FlatList
           data={studySessions}
@@ -98,7 +100,7 @@ const Sessions = () => {
             </View>
           )}
         />
-      </View>
+      </View> */}
     </View>
   );
 };
@@ -108,13 +110,18 @@ export default Sessions;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: "100%",
     padding: 16,
     gap: 16,
   },
   heatmapSection: {
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 8,
+    overflow: "hidden",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
     backgroundColor: "#fff",
+    width: "100%",
+    alignSelf: "stretch",
   },
   listSection: {
     flex: 1,
