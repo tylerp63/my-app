@@ -1,5 +1,8 @@
+import { Button } from "@tamagui/button";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
+import { View } from "tamagui";
 import { supabase } from "../utils/supabase";
 type studySession = {
   started_at: string;
@@ -37,7 +40,8 @@ const Timer = () => {
       .from("study_sessions")
       .insert<studySession>(savedSession);
     console.log(data);
-
+    end();
+    router.push("/results");
     if (error) {
       console.log("Error saving session:", error);
     }
@@ -84,57 +88,50 @@ const Timer = () => {
     return `${mm}:${ss}`;
   }
 
-  function formatIso(iso: string) {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString();
-  }
   return (
     <>
       <View style={styles.timerContainer}>
         <Text style={styles.timerText}>{formatTime(elapsedSeconds)}</Text>
       </View>
-      <View style={styles.container}>
+      <View style={styles.buttonContainer}>
         {status === "stopped" && (
-          <Pressable onPress={start}>
-            <Text style={styles.button}>Start</Text>
-          </Pressable>
+          <Button
+            marginTop={80}
+            height={80}
+            borderRadius={50}
+            style={styles.buttonContainerButton}
+            onPress={start}
+          >
+            Start
+          </Button>
         )}
 
         {status === "running" && (
-          <Pressable onPress={pause}>
-            <Text style={styles.button}>Pause</Text>
-          </Pressable>
+          <Button style={styles.buttonContainerButton} onPress={pause}>
+            Pause
+          </Button>
         )}
 
         {status === "paused" && (
           <>
-            <Pressable onPress={resume}>
-              <Text style={styles.button}>Resume</Text>
-            </Pressable>
+            <Button style={styles.buttonContainerButton} onPress={resume}>
+              Resume
+            </Button>
 
-            <Pressable onPress={handleSave}>
-              <Text style={styles.button}>Save</Text>
-            </Pressable>
+            <Button style={styles.buttonContainerButton} onPress={handleSave}>
+              Save
+            </Button>
           </>
         )}
 
         {(status === "running" || status === "paused") && (
-          <Pressable onPress={end}>
-            <Text
-              style={{
-                minWidth: 240,
-                fontSize: 24,
-                textAlign: "center",
-                margin: 6,
-                padding: 24,
-                borderRadius: 50,
-                backgroundColor: "#DF9C9C",
-              }}
-            >
-              End Session
-            </Text>
-          </Pressable>
+          <Button
+            style={styles.buttonContainerButton}
+            backgroundColor="#DF9C9C"
+            onPress={end}
+          >
+            End Session
+          </Button>
         )}
       </View>
     </>
@@ -144,14 +141,19 @@ const Timer = () => {
 export default Timer;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
+  buttonContainer: {
+    display: "flex",
+    justifyContent: "space-around",
+    width: "30%",
   },
-  timerContainer: {
+  buttonContainerButton: {
     flex: 1,
+    margin: 5,
+    padding: 10,
+    boxSizing: "border-box",
+  },
+
+  timerContainer: {
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "flex-end",

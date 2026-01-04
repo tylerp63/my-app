@@ -1,61 +1,64 @@
-import { Tabs } from "expo-router";
-
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { defaultConfig } from "@tamagui/config/v4";
+import { Tabs } from "expo-router";
+import React from "react";
+import { createTamagui, TamaguiProvider, Theme } from "tamagui";
+
+const config = createTamagui(defaultConfig);
 
 export default function TabLayout() {
   return (
-    <SafeAreaProvider>
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: "#ffd33d",
-        }}
-      >
-        <Tabs.Screen
-          name="main"
-          options={{
-            title: "Home",
-            headerShown: false,
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "home-sharp" : "home-outline"}
-                color={color}
-                size={24}
-              />
-            ),
+    <TamaguiProvider config={config}>
+      <Theme name="light">
+        <Tabs
+          screenOptions={{
+            tabBarActiveTintColor: "#ffd33d",
           }}
-        />
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Profile",
-            headerShown: false,
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "home-sharp" : "home-outline"}
-                color={color}
-                size={24}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="stats"
-          options={{
-            title: "Stats",
-            headerShown: false,
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={
-                  focused ? "information-circle" : "information-circle-outline"
-                }
-                color={color}
-                size={24}
-              />
-            ),
-          }}
-        />
-      </Tabs>
-    </SafeAreaProvider>
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: "Profile",
+              headerShown: false,
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons
+                  name={focused ? "person-sharp" : "person-outline"}
+                  color={color}
+                  size={24}
+                />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="main"
+            options={{
+              title: "Home",
+              headerShown: false,
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons
+                  name={focused ? "home-sharp" : "home-outline"}
+                  color={color}
+                  size={24}
+                />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="stats"
+            options={{
+              title: "Stats",
+              headerShown: false,
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons
+                  name={focused ? "stats-chart-sharp" : "stats-chart-outline"}
+                  color={color}
+                  size={24}
+                />
+              ),
+            }}
+          />
+        </Tabs>
+      </Theme>
+    </TamaguiProvider>
   );
 }

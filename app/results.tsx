@@ -1,8 +1,14 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Button } from "tamagui";
 export default function Results() {
   const [rating, setRating] = React.useState(0);
+
+  const goBack = () => {
+    router.back();
+  };
   return (
     <>
       <View
@@ -39,9 +45,9 @@ export default function Results() {
           ))}
         </View>
 
-        <Pressable style={{ paddingTop: 40, paddingBottom: 28 }}>
-          <Text style={styles.completeButton}>Add Location</Text>
-        </Pressable>
+        <Button marginTop={20} onPress={goBack}>
+          Back to home
+        </Button>
       </View>
     </>
   );
