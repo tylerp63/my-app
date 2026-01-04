@@ -44,7 +44,8 @@ export default function LoginScreen() {
           }}
           onChangeText={(text) => setEmail(text)}
           value={email}
-          placeholder="email@address.com"
+          placeholder="Email"
+          placeholderTextColor={"#777777ff"}
           autoCapitalize={"none"}
         />
       </View>
@@ -61,6 +62,7 @@ export default function LoginScreen() {
           value={password}
           secureTextEntry={true}
           placeholder="Password"
+          placeholderTextColor={"#777777ff"}
           autoCapitalize={"none"}
         />
       </View>

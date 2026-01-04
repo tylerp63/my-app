@@ -13,7 +13,11 @@ async function onSignOutButtonPress() {
 export default function SignOutButton() {
   return (
     <>
-      <Button onPress={onSignOutButtonPress} maxWidth="40%">
+      <Button
+        boxShadow={"0 4px 8px rgba(0, 0, 0, 0.1)"}
+        onPress={onSignOutButtonPress}
+        maxWidth="40%"
+      >
         Sign out
       </Button>
     </>
