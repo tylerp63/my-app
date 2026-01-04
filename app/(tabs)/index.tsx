@@ -12,7 +12,8 @@ export default function HomeScreen() {
         alignItems="center"
         gap="$9"
       >
-        <Text fontSize="$10">Welcome!</Text>
+        <Text fontSize="$10">Let's study!</Text>
+        <Text fontSize="$10"></Text>
         <Text>signed in as: {profile?.email}</Text>
 
         <SignOutButton />
