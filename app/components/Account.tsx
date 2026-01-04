@@ -1,16 +1,17 @@
-import { Button, Input } from "@rneui/themed";
 import { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../utils/supabase";
 
 export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState("");
-  const [website, setWebsite] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
+    // Always show the auth email first (works even without a `users` row)
+    setEmail(session?.user?.email ?? "");
+
+    // Optionally hydrate from your public `users` table if you store email there too
     if (session) getProfile();
   }, [session]);
 
@@ -19,54 +20,21 @@ export default function Account({ session }: { session: Session }) {
       setLoading(true);
       if (!session?.user) throw new Error("No user on the session!");
 
-      const { data, error, status } = await supabase
-        .from("profiles")
-        .select(`username, website, avatar_url`)
-        .eq("id", session?.user.id)
-        .single();
-      if (error && status !== 406) {
-        throw error;
-      }
+      const { data, error } = await supabase
+        .from("users")
+        .select("email")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
-      if (data) {
-        setUsername(data.username);
-        setWebsite(data.website);
-        setAvatarUrl(data.avatar_url);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert(error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function updateProfile({
-    username,
-    website,
-    avatar_url,
-  }: {
-    username: string;
-    website: string;
-    avatar_url: string;
-  }) {
-    try {
-      setLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
-
-      const updates = {
-        id: session?.user.id,
-        username,
-        website,
-        avatar_url,
-        updated_at: new Date(),
-      };
-
-      const { error } = await supabase.from("profiles").upsert(updates);
-
+      // If the table / policy isn't set up, don't break the UI; we still have auth email.
       if (error) {
-        throw error;
+        console.log("getProfile users.email error:", error);
+        return;
+      }
+
+      // Only override if your table has an email value
+      if (data?.email) {
+        setEmail(data.email);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -78,53 +46,55 @@ export default function Account({ session }: { session: Session }) {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Input label="Email" value={session?.user?.email} disabled />
+    <>
+      <View style={[styles.container, { justifyContent: "flex-end" }]}>
+        <Text style={{ fontSize: 20, color: "#c6c6c6ff" }}>Signed in as:</Text>
+        <Text style={{ fontSize: 18, color: "#c6c6c6ff" }}>
+          {email || "(no email found)"}
+        </Text>
       </View>
-      <View style={styles.verticallySpaced}>
-        <Input
-          label="Username"
-          value={username || ""}
-          onChangeText={(text) => setUsername(text)}
-        />
+      <View style={styles.container}>
+        <Pressable onPress={() => supabase.auth.signOut()}>
+          <Text style={styles.button}>Sign Out</Text>
+        </Pressable>
       </View>
-      <View style={styles.verticallySpaced}>
-        <Input
-          label="Website"
-          value={website || ""}
-          onChangeText={(text) => setWebsite(text)}
-        />
-      </View>
-
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button
-          title={loading ? "Loading ..." : "Update"}
-          onPress={() =>
-            updateProfile({ username, website, avatar_url: avatarUrl })
-          }
-          disabled={loading}
-        />
-      </View>
-
-      <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
-      </View>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
-    padding: 12,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 8,
+    minWidth: 500,
   },
-  verticallySpaced: {
-    paddingTop: 4,
-    paddingBottom: 4,
-    alignSelf: "stretch",
+  text: {
+    color: "#000000",
   },
-  mt20: {
-    marginTop: 20,
+  timerText: {
+    fontSize: 130,
+    color: "#000000",
+  },
+  button: {
+    fontSize: 15,
+    color: "#000000ff",
+    backgroundColor: "#F4F4F4",
+    textAlign: "center",
+    minWidth: 260,
+    margin: 8,
+    padding: 20,
+    borderRadius: 50,
+  },
+  completeButton: {
+    fontSize: 15,
+    color: "#000000ff",
+    backgroundColor: "#D9D9D9",
+    textAlign: "center",
+    minWidth: 260,
+    margin: 8,
+    padding: 20,
+    borderRadius: 50,
   },
 });
