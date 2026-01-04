@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
+    marginTop: 45,
     marginBottom: 16,
   },
   inputContainer: {
