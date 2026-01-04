@@ -9,7 +9,7 @@ export default function Results() {
   const [rating, setRating] = React.useState(0);
 
   const goBack = () => {
-    router.back();
+    router.push("/");
   };
 
   return (

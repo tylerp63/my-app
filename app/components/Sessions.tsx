@@ -1,81 +1,45 @@
 import { WeeklyHeatMap } from "@symbiot.dev/react-native-heatmap";
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { supabase } from "../utils/supabase";
-type session = {
-  id: string;
-  started_at: string;
-  ended_at: string;
-  duration_sec: number;
-};
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import { Text } from "tamagui";
+import useDateRanges from "../hooks/useDateRanges";
+import useSessionDerivedData from "../hooks/useSessionDerivedDate";
+import useStudySessions from "../hooks/useStudySessions";
+import formatTotal from "./FormatTotal";
+
 const Sessions = () => {
-  const [studySessions, setSessions] = useState<session[]>([]);
-  const [startTimes, setStartTimes] = useState<string[]>([]);
-  useEffect(() => {
-    const getStudySessions = async () => {
-      try {
-        const { data: studySessions, error } = await supabase
-          .from("study_sessions")
-          .select();
-
-        if (error) {
-          console.error("Error fetching sessions:", error.message);
-          return;
-        }
-
-        if (studySessions && studySessions.length > 0) {
-          setSessions(studySessions);
-          setStartTimes(studySessions.map((s) => s.started_at));
-        } else {
-          setSessions([]);
-          setStartTimes([]);
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error("Error fetching sessions:", error.message);
-        } else {
-          console.error("Error fetching sessions:", error);
-        }
-      }
-    };
-
-    getStudySessions();
-  }, []);
-
-  function formatTime(totalSeconds: number) {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    const mm = String(minutes).padStart(2, "0");
-    const ss = String(seconds).padStart(2, "0");
-
-    return `${mm}:${ss}`;
-  }
-
-  function formatIso(iso: string) {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString();
-  }
-  var now = new Date();
-  if (now.getMonth() == 11) {
-    var current = new Date(now.getFullYear() + 1, 0, 1);
-  } else {
-    var current = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  }
+  const ranges = useDateRanges();
+  const { sessions: studySessions, loading, error } = useStudySessions();
+  const { startTimes, totalSec } = useSessionDerivedData(studySessions, ranges);
 
   return (
     <View style={styles.container}>
       <View style={styles.heatmapSection}>
-        <Text style={styles.sectionTitle}>Study heatmap</Text>
         <WeeklyHeatMap
           data={startTimes}
           theme={{ scheme: "light" }}
-          startDate={now}
-          endDate={current}
+          startDate={ranges.monthStart}
+          endDate={ranges.monthEnd}
           cellSize={40}
           scrollable={false}
           isSidebarVisible={true}
         />
+      </View>
+      <View style={styles.listSection}>
+        <Text style={styles.sectionTitle}>This week's study total:</Text>
+        {error ? (
+          <Text color={"#b91c1c"} textAlign="center">
+            {error}
+          </Text>
+        ) : null}
+        {loading ? (
+          <Text textAlign="center" marginTop={12}>
+            Loading…
+          </Text>
+        ) : null}
+        <Text fontSize={48} marginTop={24} textAlign="center">
+          {formatTotal(totalSec)}
+        </Text>
       </View>
 
       {/* <View style={styles.listSection}>
@@ -115,15 +79,17 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heatmapSection: {
+    alignSelf: "center",
     padding: 12,
     borderRadius: 8,
     overflow: "hidden",
     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
     backgroundColor: "#fff",
-    width: "100%",
-    alignSelf: "stretch",
+    maxWidth: 500,
+    minWidth: 400,
   },
   listSection: {
+    alignSelf: "center",
     flex: 1,
     padding: 12,
     borderRadius: 12,
@@ -132,6 +98,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
     color: "#25292e",
     marginBottom: 8,
   },
