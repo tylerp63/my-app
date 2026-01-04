@@ -14,6 +14,45 @@ export type Database = {
   };
   public: {
     Tables: {
+      study_session_subjects: {
+        Row: {
+          created_at: string;
+          seconds_spent: number;
+          session_id: string;
+          subject_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          seconds_spent?: number;
+          session_id: string;
+          subject_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          seconds_spent?: number;
+          session_id?: string;
+          subject_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "study_session_subjects_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "study_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "study_session_subjects_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "subjects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       study_sessions: {
         Row: {
           created_at: string;
@@ -50,12 +89,84 @@ export type Database = {
         };
         Relationships: [];
       };
+      subjects: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      tasks: {
+        Row: {
+          completed: boolean | null;
+          completed_at: string | null;
+          created_at: string | null;
+          id: string;
+          subject_id: string | null;
+          task_date: string;
+          title: string;
+          user_id: string | null;
+        };
+        Insert: {
+          completed?: boolean | null;
+          completed_at?: string | null;
+          created_at?: string | null;
+          id?: string;
+          subject_id?: string | null;
+          task_date?: string;
+          title: string;
+          user_id?: string | null;
+        };
+        Update: {
+          completed?: boolean | null;
+          completed_at?: string | null;
+          created_at?: string | null;
+          id?: string;
+          subject_id?: string | null;
+          task_date?: string;
+          title?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "subjects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      get_weekly_subject_breakdown: {
+        Args: never;
+        Returns: {
+          subject_id: string;
+          subject_name: string;
+          total_seconds: number;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -1,11 +1,19 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "tamagui";
-import ImagePickerExample from "./components/ImagePicker";
-import LocationTool from "./components/LocationTool";
+import formatTime from "../components/formatTime";
+import ImagePickerExample from "../components/ImagePicker";
+import LocationTool from "../components/LocationTool";
+import useSingleStudySession from "../hooks/useSingleStudySession";
 export default function Results() {
+  const { id } = useLocalSearchParams();
+
+  const sessionId =
+    typeof id === "string" ? id : Array.isArray(id) ? id[0] : undefined;
+
+  const { durationSec, loading } = useSingleStudySession(sessionId);
   const [rating, setRating] = React.useState(0);
 
   const goBack = () => {
@@ -24,7 +32,9 @@ export default function Results() {
           gap: 17,
         }}
       >
-        <Text style={styles.timerText}>00:00</Text>
+        <Text style={styles.timerText}>
+          {loading ? "…" : durationSec != null ? formatTime(durationSec) : "--"}
+        </Text>
         <Button circular={true} style={styles.button}>
           Task List
         </Button>
