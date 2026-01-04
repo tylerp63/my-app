@@ -3,12 +3,15 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "tamagui";
+import ImagePickerExample from "./components/ImagePicker";
+import LocationTool from "./components/LocationTool";
 export default function Results() {
   const [rating, setRating] = React.useState(0);
 
   const goBack = () => {
     router.back();
   };
+
   return (
     <>
       <View
@@ -21,19 +24,20 @@ export default function Results() {
           gap: 17,
         }}
       >
-        <Text style={{ fontSize: 15 }}>Session Title</Text>
         <Text style={styles.timerText}>00:00</Text>
-        <Pressable>
-          <Text style={styles.button}>Task List</Text>
-        </Pressable>
-        <Pressable>
-          <Text style={styles.button}>Add Photo</Text>
-        </Pressable>
-
-        <Pressable style={{ paddingBottom: 28 }}>
-          <Text style={styles.button}>Add Location</Text>
-        </Pressable>
-        <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+        <Button circular={true} style={styles.button}>
+          Task List
+        </Button>
+        <ImagePickerExample />
+        <LocationTool />
+        <View
+          style={{
+            marginTop: 20,
+            display: "flex",
+            flexDirection: "row",
+            gap: 20,
+          }}
+        >
           {[1, 2, 3, 4, 5].map((value) => (
             <Pressable key={value} onPress={() => setRating(value)}>
               <AntDesign
@@ -66,14 +70,7 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   button: {
-    fontSize: 15,
-    color: "#000000ff",
-    backgroundColor: "#F4F4F4",
-    textAlign: "center",
-    minWidth: 260,
-    margin: 8,
-    padding: 20,
-    borderRadius: 50,
+    minWidth: "50%",
   },
   completeButton: {
     fontSize: 15,

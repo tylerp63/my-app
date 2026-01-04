@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Alert, StyleSheet, TextInput } from "react-native";
-import { Button, View } from "tamagui";
+import { Button, Text, View } from "tamagui";
 import { supabase } from "./utils/supabase";
 
 export default function LoginScreen() {
@@ -32,8 +32,16 @@ export default function LoginScreen() {
   }
   return (
     <View style={styles.container}>
+      <Text style={{ color: "black", fontSize: 24 }}>toki</Text>
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <TextInput
+          style={{
+            padding: 8,
+            fontSize: 20,
+            borderWidth: 1,
+            borderColor: "#c2c2c2ff",
+            borderRadius: 8,
+          }}
           onChangeText={(text) => setEmail(text)}
           value={email}
           placeholder="email@address.com"
@@ -42,6 +50,13 @@ export default function LoginScreen() {
       </View>
       <View style={styles.verticallySpaced}>
         <TextInput
+          style={{
+            padding: 8,
+            fontSize: 20,
+            borderWidth: 1,
+            borderColor: "#c2c2c2ff",
+            borderRadius: 8,
+          }}
           onChangeText={(text) => setPassword(text)}
           value={password}
           secureTextEntry={true}
@@ -65,8 +80,11 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 40,
-    padding: 12,
+    padding: 16,
   },
   verticallySpaced: {
     paddingTop: 4,

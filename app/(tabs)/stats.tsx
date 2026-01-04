@@ -1,11 +1,9 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet } from "react-native";
+import { View } from "tamagui";
 import Sessions from "../components/Sessions";
 export default function Index() {
   return (
     <>
-      <View style={styles.container}>
-        <Text>User: Diddy Cheesler</Text>
-      </View>
       <View style={styles.container}>
         <Sessions />
       </View>
@@ -15,6 +13,8 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
+    margin: 80,
+    gap: 20,
     flex: 1,
     backgroundColor: "#fff",
     alignItems: "center",

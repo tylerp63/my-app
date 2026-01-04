@@ -107,18 +107,30 @@ const Timer = () => {
         )}
 
         {status === "running" && (
-          <Button style={styles.buttonContainerButton} onPress={pause}>
+          <Button
+            borderRadius={50}
+            style={styles.buttonContainerButton}
+            onPress={pause}
+          >
             Pause
           </Button>
         )}
 
         {status === "paused" && (
           <>
-            <Button style={styles.buttonContainerButton} onPress={resume}>
+            <Button
+              borderRadius={50}
+              style={styles.buttonContainerButton}
+              onPress={resume}
+            >
               Resume
             </Button>
 
-            <Button style={styles.buttonContainerButton} onPress={handleSave}>
+            <Button
+              borderRadius={50}
+              style={styles.buttonContainerButton}
+              onPress={handleSave}
+            >
               Save
             </Button>
           </>
@@ -126,6 +138,7 @@ const Timer = () => {
 
         {(status === "running" || status === "paused") && (
           <Button
+            borderRadius={50}
             style={styles.buttonContainerButton}
             backgroundColor="#DF9C9C"
             onPress={end}
@@ -142,13 +155,15 @@ export default Timer;
 
 const styles = StyleSheet.create({
   buttonContainer: {
+    marginTop: 100,
     display: "flex",
+    gap: 10,
     justifyContent: "space-around",
-    width: "30%",
+    minWidth: "80%",
+    minHeight: "20%",
   },
   buttonContainerButton: {
     flex: 1,
-    margin: 5,
     padding: 10,
     boxSizing: "border-box",
   },
