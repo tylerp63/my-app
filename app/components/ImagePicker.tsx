@@ -27,7 +27,7 @@ export default function ImagePickerExample() {
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 1
     });
 
     console.log(result);
@@ -58,13 +58,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
   },
   image: {
     borderWidth: 3,
     borderRadius: 20,
     borderColor: "#cfcfcfff",
     width: 200,
-    height: 200,
-  },
+    height: 200
+  }
 });

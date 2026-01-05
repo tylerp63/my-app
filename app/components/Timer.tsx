@@ -1,13 +1,15 @@
+import { Database } from "@/database.types";
 import { Button } from "@tamagui/button";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import { View } from "tamagui";
 import { supabase } from "../utils/supabase";
-type StudySession = {
-  started_at: string;
-  ended_at: string;
-  duration_sec: number;
-};
+
+type StudySessionInsert =
+  Database["public"]["Tables"]["study_sessions"]["Insert"];
+
+type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
 
 type TimerState = "idle" | "running" | "paused";
 function Timer() {
@@ -62,26 +64,37 @@ function Timer() {
     setCarrySeconds(0);
   }
 
-  function buildSavePayload(sessionStart: number, totalSeconds: number) {
+  function buildSavePayload(
+    userId: string,
+    sessionStart: number,
+    totalSeconds: number
+  ): StudySessionInsert {
     const startedIso = new Date(sessionStart).toISOString();
     const endedIso = new Date().toISOString();
 
     return {
+      user_id: userId,
       started_at: startedIso,
       ended_at: endedIso,
       duration_sec: totalSeconds,
     };
   }
 
-  async function persistSession(payload: StudySession) {
-    const { error } = await supabase.from("study_sessions").insert(payload);
+  async function persistSession(
+    payload: StudySessionInsert
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from("study_sessions")
+      .insert(payload)
+      .select("id")
+      .single();
 
     if (error) {
       console.error("Save failed", error);
-      return false;
+      return null;
     }
 
-    return true;
+    return data?.id ?? null;
   }
 
   function formatTime(totalSeconds: number) {
@@ -100,13 +113,29 @@ function Timer() {
       return;
     }
 
-    const payload: StudySession = buildSavePayload(sessionStart, totalSeconds);
-    const success = await persistSession(payload);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!success) return;
+    if (userError || !user?.id) {
+      console.warn("Cannot save: user not authenticated.");
+      return;
+    }
+
+    const payload: StudySessionInsert = buildSavePayload(
+      user.id,
+      sessionStart,
+      totalSeconds
+    );
+
+    const sessionId = await persistSession(payload);
+
+    if (!sessionId) return;
 
     // On success, reset timer state
     resetSession();
+    router.push(`/results/${sessionId}`);
   }
 
   return (

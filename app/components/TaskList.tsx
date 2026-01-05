@@ -1,25 +1,31 @@
+import { Tables } from "@/database.types";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TextInput, View, FlatList, Pressable } from "react-native";
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Button } from "tamagui";
 import { supabase } from "../utils/supabase";
 
-type Task = { //this defines the structure of a task
-  id: string;
-  title: string;
-  completed: boolean;
-  created_at: string;
-};
+type Task = Tables<"tasks">;
 
-const TaskList = () => { //main component so like reuseable "task list"
+const TaskList = () => {
+  //main component so like reuseable "task list"
   const [tasks, setTasks] = useState<Task[]>([]); //state to hold list of tasks
-  
+
   const [newTaskTitle, setNewTaskTitle] = useState(""); //state to hold new task title input
 
-  useEffect(() => { //loads tasks when component mounts (loads)
+  useEffect(() => {
+    //loads tasks when component mounts (loads)
     loadTasks();
   }, []);
 
-  const loadTasks = async () => { //function to load tasks from supabase
+  const loadTasks = async () => {
+    //function to load tasks from supabase
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
@@ -33,35 +39,37 @@ const TaskList = () => { //main component so like reuseable "task list"
     setTasks(data || []);
   };
 
-  const addTask = async () => { //function to add new task to supabase
+  const addTask = async () => {
+    //function to add new task to supabase
     if (!newTaskTitle.trim()) return; //avoid adding empty tasks
 
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) return;
 
-    const { error } = await supabase
-      .from("tasks")
-      .insert({
-        title: newTaskTitle,
-        user_id: user.id,
-      });
+    const { error } = await supabase.from("tasks").insert({
+      title: newTaskTitle,
+      user_id: user.id,
+    });
 
     if (error) {
       console.error("Error adding task:", error);
       return;
     }
 
-    setNewTaskTitle(""); 
-    loadTasks(); 
+    setNewTaskTitle("");
+    loadTasks();
   };
 
-  const toggleTask = async (taskId: string, currentStatus: boolean) => { //function to toggle task completion status
+  const toggleTask = async (taskId: string, currentStatus: boolean | null) => {
+    //function to toggle task completion status
     const { error } = await supabase
       .from("tasks")
-      .update({ 
+      .update({
         completed: !currentStatus,
-        completed_at: !currentStatus ? new Date().toISOString() : null
+        completed_at: !currentStatus ? new Date().toISOString() : null,
       })
       .eq("id", taskId);
 
@@ -70,12 +78,12 @@ const TaskList = () => { //main component so like reuseable "task list"
       return;
     }
 
-    loadTasks(); 
+    loadTasks();
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Today's Tasks</Text>
+      <Text style={styles.title}>Today&apos;s Tasks</Text>
 
       {/* Input to add new task */}
       <View style={styles.inputContainer}>
@@ -93,17 +101,19 @@ const TaskList = () => { //main component so like reuseable "task list"
         data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <Pressable 
+          <Pressable
             style={styles.taskRow}
             onPress={() => toggleTask(item.id, item.completed)}
           >
             <View style={styles.checkbox}>
               {item.completed && <Text style={styles.checkmark}>✓</Text>}
             </View>
-            <Text style={[
-              styles.taskText,
-              item.completed && styles.taskTextCompleted
-            ]}>
+            <Text
+              style={[
+                styles.taskText,
+                item.completed && styles.taskTextCompleted,
+              ]}
+            >
               {item.title}
             </Text>
           </Pressable>
