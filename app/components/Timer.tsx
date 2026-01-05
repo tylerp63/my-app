@@ -76,7 +76,7 @@ function Timer() {
       user_id: userId,
       started_at: startedIso,
       ended_at: endedIso,
-      duration_sec: totalSeconds,
+      duration_sec: totalSeconds
     };
   }
 
@@ -115,7 +115,7 @@ function Timer() {
 
     const {
       data: { user },
-      error: userError,
+      error: userError
     } = await supabase.auth.getUser();
 
     if (userError || !user?.id) {
@@ -220,25 +220,25 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: "space-around",
     minWidth: "80%",
-    minHeight: "20%",
+    minHeight: "20%"
   },
   buttonContainerButton: {
     flex: 1,
     padding: 10,
-    boxSizing: "border-box",
+    boxSizing: "border-box"
   },
 
   timerContainer: {
     backgroundColor: "#fff",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "flex-end"
   },
   text: {
-    color: "#25292e",
+    color: "#25292e"
   },
   timerText: {
     fontSize: 72,
-    color: "#25292e",
+    color: "#25292e"
   },
   button: {
     fontSize: 24,
@@ -248,26 +248,26 @@ const styles = StyleSheet.create({
     minWidth: 240,
     margin: 6,
     padding: 24,
-    borderRadius: 50,
+    borderRadius: 50
   },
   sectionTitle: {
     marginTop: 16,
     fontSize: 18,
     fontWeight: "600",
-    color: "#25292e",
+    color: "#25292e"
   },
   emptyText: {
     marginTop: 8,
-    color: "rgba(37, 41, 45, 0.68)",
+    color: "rgba(37, 41, 45, 0.68)"
   },
   sessionRow: {
     marginTop: 12,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: "#2f3440",
+    backgroundColor: "#2f3440"
   },
   sessionText: {
     color: "#fff",
-    marginTop: 4,
-  },
+    marginTop: 4
+  }
 });

@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 import { Button } from "tamagui";
 import { supabase } from "../utils/supabase";
@@ -44,14 +44,14 @@ const TaskList = () => {
     if (!newTaskTitle.trim()) return; //avoid adding empty tasks
 
     const {
-      data: { user },
+      data: { user }
     } = await supabase.auth.getUser();
 
     if (!user) return;
 
     const { error } = await supabase.from("tasks").insert({
       title: newTaskTitle,
-      user_id: user.id,
+      user_id: user.id
     });
 
     if (error) {
@@ -63,15 +63,30 @@ const TaskList = () => {
     loadTasks();
   };
 
-  const toggleTask = async (taskId: string, currentStatus: boolean | null) => {
-    //function to toggle task completion status
+  const deleteTasks = async () => {
+    const { error } = await supabase
+      .from("tasks")
+      .delete()
+      .eq("completed", true);
+
+    if (error) {
+      console.error("Error deleting tasks:", error);
+      return;
+    }
+
+    loadTasks();
+  };
+
+  const toggleTask = async (task: Task) => {
+    const nextCompleted = !task.completed;
+
     const { error } = await supabase
       .from("tasks")
       .update({
-        completed: !currentStatus,
-        completed_at: !currentStatus ? new Date().toISOString() : null,
+        completed: nextCompleted,
+        completed_at: nextCompleted ? new Date().toISOString() : null
       })
-      .eq("id", taskId);
+      .eq("id", task.id);
 
     if (error) {
       console.error("Error updating task:", error);
@@ -95,23 +110,24 @@ const TaskList = () => {
         />
         <Button onPress={addTask}>Add</Button>
       </View>
+      {/* Button to delete tasks */}
+      <View style={styles.inputContainer}>
+        <Button onPress={deleteTasks}>Clear tasks</Button>
+      </View>
 
       {/* List of tasks */}
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <Pressable
-            style={styles.taskRow}
-            onPress={() => toggleTask(item.id, item.completed)}
-          >
+          <Pressable style={styles.taskRow} onPress={() => toggleTask(item)}>
             <View style={styles.checkbox}>
               {item.completed && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <Text
               style={[
                 styles.taskText,
-                item.completed && styles.taskTextCompleted,
+                item.completed && styles.taskTextCompleted
               ]}
             >
               {item.title}
@@ -128,18 +144,18 @@ export default TaskList;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 16
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginTop: 45,
-    marginBottom: 16,
+    marginBottom: 16
   },
   inputContainer: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 16
   },
   input: {
     flex: 1,
@@ -147,7 +163,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
+    fontSize: 16
   },
   taskRow: {
     flexDirection: "row",
@@ -155,7 +171,7 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 8
   },
   checkbox: {
     width: 24,
@@ -165,18 +181,18 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginRight: 12,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "center"
   },
   checkmark: {
     fontSize: 16,
-    color: "#333",
+    color: "#333"
   },
   taskText: {
     fontSize: 16,
-    flex: 1,
+    flex: 1
   },
   taskTextCompleted: {
     textDecorationLine: "line-through",
-    color: "#999",
-  },
+    color: "#999"
+  }
 });
