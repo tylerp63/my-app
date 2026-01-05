@@ -1,6 +1,5 @@
 import { Session } from "@supabase/supabase-js";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../utils/supabase";
 
 export default function useAccountEmail(session: Session | null) {
   const authEmail = useMemo(() => session?.user?.email ?? "", [session]);
@@ -22,27 +21,6 @@ export default function useAccountEmail(session: Session | null) {
       if (!session?.user) {
         if (isMounted) setLoading(false);
         return;
-      }
-
-      const { data, error } = await supabase
-        .from("users")
-        .select("email")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!isMounted) return;
-
-      // If the table / policy isn't set up, don't break the UI; we still have auth email.
-      if (error) {
-        console.log("getProfile users.email error:", error);
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
-
-      // Only override if your table has an email value
-      if (data?.email) {
-        setEmail(data.email);
       }
 
       setLoading(false);

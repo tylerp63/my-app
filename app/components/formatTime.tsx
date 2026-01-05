@@ -1,4 +1,4 @@
-export default function formatTime(totalSeconds: number) {
+export default function formatTimeMmSs(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const mm = String(minutes).padStart(2, "0");

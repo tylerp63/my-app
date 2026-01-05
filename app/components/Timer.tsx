@@ -1,3 +1,4 @@
+import { Database } from "@/database.types";
 import { Button } from "@tamagui/button";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -5,12 +6,10 @@ import { StyleSheet, Text } from "react-native";
 import { View } from "tamagui";
 import { supabase } from "../utils/supabase";
 
-type StudySession = {
-  user_id: string;
-  started_at: string;
-  ended_at: string;
-  duration_sec: number;
-};
+type StudySessionInsert =
+  Database["public"]["Tables"]["study_sessions"]["Insert"];
+
+type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
 
 type TimerState = "idle" | "running" | "paused";
 function Timer() {
@@ -69,7 +68,7 @@ function Timer() {
     userId: string,
     sessionStart: number,
     totalSeconds: number
-  ) {
+  ): StudySessionInsert {
     const startedIso = new Date(sessionStart).toISOString();
     const endedIso = new Date().toISOString();
 
@@ -81,7 +80,9 @@ function Timer() {
     };
   }
 
-  async function persistSession(payload: StudySession): Promise<string | null> {
+  async function persistSession(
+    payload: StudySessionInsert
+  ): Promise<string | null> {
     const { data, error } = await supabase
       .from("study_sessions")
       .insert(payload)
@@ -122,7 +123,7 @@ function Timer() {
       return;
     }
 
-    const payload: StudySession = buildSavePayload(
+    const payload: StudySessionInsert = buildSavePayload(
       user.id,
       sessionStart,
       totalSeconds

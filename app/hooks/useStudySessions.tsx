@@ -1,12 +1,8 @@
+import { Tables } from "@/database.types";
 import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabase";
 
-type StudySession = {
-  id: string;
-  started_at: string;
-  ended_at: string;
-  duration_sec: number;
-};
+type StudySession = Tables<"study_sessions">;
 
 export default function useStudySessions() {
   const [sessions, setSessions] = useState<StudySession[]>([]);

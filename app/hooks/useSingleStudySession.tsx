@@ -1,8 +1,11 @@
+import { Database } from "@/database.types";
 import React from "react";
 import { supabase } from "../utils/supabase";
 
+type StudySessionRow = Database["public"]["Tables"]["study_sessions"]["Row"];
+
 type SingleStudySessionResult = {
-  durationSec: number | null;
+  durationSec?: StudySessionRow["duration_sec"] | null;
   loading: boolean;
   error: string | null;
 };
@@ -28,7 +31,7 @@ export default function useSingleStudySession(
       const { data, error } = await supabase
         .from("study_sessions")
         .select("duration_sec")
-        .eq("id", id)
+        .eq("id", id!)
         .single();
 
       if (!isMounted) return;

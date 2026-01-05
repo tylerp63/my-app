@@ -26,7 +26,7 @@ const Sessions = () => {
         />
       </View>
       <View style={styles.listSection}>
-        <Text style={styles.sectionTitle}>This week's study total:</Text>
+        <Text style={styles.sectionTitle}>This week&apos;s study total:</Text>
         {error ? (
           <Text color={"#b91c1c"} textAlign="center">
             {error}
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     padding: 16,
-    gap: 16,
+    gap: 16
   },
   heatmapSection: {
     alignSelf: "center",
@@ -86,45 +86,45 @@ const styles = StyleSheet.create({
     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
     backgroundColor: "#fff",
     maxWidth: 500,
-    minWidth: 400,
+    minWidth: 400
   },
   listSection: {
     alignSelf: "center",
     flex: 1,
     padding: 12,
     borderRadius: 12,
-    backgroundColor: "#fff",
+    backgroundColor: "#fff"
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
     color: "#25292e",
-    marginBottom: 8,
+    marginBottom: 8
   },
   text: {
-    color: "#25292e",
+    color: "#25292e"
   },
   timerText: {
     fontSize: 40,
-    color: "#25292e",
+    color: "#25292e"
   },
   button: {
     fontSize: 20,
-    color: "#25292e",
+    color: "#25292e"
   },
   emptyText: {
     marginTop: 8,
-    color: "rgba(37, 41, 45, 0.68)",
+    color: "rgba(37, 41, 45, 0.68)"
   },
   sessionRow: {
     marginTop: 12,
     padding: 12,
     borderRadius: 10,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#f3f4f6"
   },
   sessionText: {
     color: "#25292e",
-    marginTop: 4,
-  },
+    marginTop: 4
+  }
 });

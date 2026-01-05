@@ -5,7 +5,7 @@ import * as Location from "expo-location";
 
 const LocationTool = () => {
   const [location, setLocation] = useState<Location.LocationObject | null>(
-    null
+    null,
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
