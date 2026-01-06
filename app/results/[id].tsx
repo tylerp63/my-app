@@ -1,10 +1,12 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +16,11 @@ import {
 } from "react-native";
 
 import { Controller, useForm } from "react-hook-form";
+import {
+  GooglePlaceData,
+  GooglePlaceDetail,
+  GooglePlacesAutocomplete
+} from "react-native-google-places-autocomplete";
 import {
   deleteAllocationsNotIn,
   upsertSessionAllocations
@@ -119,6 +126,65 @@ export default function ResultsSessionScreen() {
       cancelled = true;
     };
   }, [sessionId, reset]);
+  const addPlaceFromGoogle = async (
+    data: GooglePlaceData,
+    details: GooglePlaceDetail | null
+  ) => {
+    try {
+      const name =
+        (details as any)?.name ??
+        (data as any)?.structured_formatting?.main_text ??
+        (data as any)?.description ??
+        "Unnamed place";
+
+      // study_places.address_text is REQUIRED and NOT nullable in your types
+      const address_text =
+        (details as any)?.formatted_address ??
+        (details as any)?.vicinity ??
+        (data as any)?.structured_formatting?.secondary_text ??
+        "";
+
+      const latitude = (details as any)?.geometry?.location?.lat ?? null;
+      const longitude = (details as any)?.geometry?.location?.lng ?? null;
+
+      const { data: userRes, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw userErr;
+
+      const userId = userRes.user?.id;
+      if (!userId) {
+        Alert.alert("Not signed in", "Please sign in to add a place.");
+        return;
+      }
+
+      // This matches Database.public.Tables.study_places.Insert
+      const insertPayload = {
+        user_id: userId,
+        name,
+        address_text,
+        latitude,
+        longitude
+      };
+
+      const { data: inserted, error } = await supabase
+        .from("study_places")
+        .insert(insertPayload)
+        .select("*")
+        .single();
+
+      if (error) throw error;
+      if (!inserted) throw new Error("No place returned from insert");
+
+      // places is StudyPlaceRow[], so update it with the inserted DB row
+      setPlaces((prev) => [inserted as any, ...prev]);
+
+      // select it for the session
+      setValue("place_id", (inserted as any).id);
+
+      setPlaceModalOpen(false);
+    } catch (e: any) {
+      Alert.alert("Add place failed", e?.message ?? "Unknown error");
+    }
+  };
 
   // Logic for creating tasks if none
   const createTask = async () => {
@@ -141,7 +207,12 @@ export default function ResultsSessionScreen() {
 
       const { data, error } = await supabase
         .from("tasks")
-        .insert({ title, user_id: userId })
+        .insert({
+          title,
+          user_id: userId,
+          completed: true,
+          completed_at: new Date().toISOString()
+        })
         .select("*")
         .single();
 
@@ -228,9 +299,6 @@ export default function ResultsSessionScreen() {
         difficulty: values.difficulty as any
       } as any;
 
-      // If your DB/types include task_id, this will persist it.
-      (patch as any).task_id = values.task_id;
-
       const { error: sessionErr } = await updateStudySession(sessionId, patch);
       if (sessionErr) throw sessionErr;
 
@@ -264,6 +332,7 @@ export default function ResultsSessionScreen() {
     } finally {
       setSaving(false);
     }
+    router.back();
   };
 
   if (loading) {
@@ -409,44 +478,87 @@ export default function ResultsSessionScreen() {
 
       {/* Place modal */}
       <Modal visible={placeModalOpen} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Select a place</Text>
-            <Controller
-              control={control}
-              name="place_id"
-              render={({ field: { value, onChange } }) => (
-                <FlatList
-                  data={places}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => {
-                    const selected = item.id === value;
-                    return (
-                      <Pressable
-                        onPress={() => {
-                          onChange(item.id);
-                          setPlaceModalOpen(false);
-                        }}
-                        style={[
-                          styles.modalRow,
-                          selected && styles.modalRowSelected
-                        ]}
-                      >
-                        <Text style={styles.modalRowText}>{item.name}</Text>
-                      </Pressable>
-                    );
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Add place</Text>
+              {Platform.OS === "web" || !GooglePlacesAutocomplete ? (
+                <Text style={styles.emptyHint}>
+                  Place search is not available on web builds.
+                </Text>
+              ) : (
+                <GooglePlacesAutocomplete
+                  styles={{
+                    container: { flex: 0 },
+                    textInput: {
+                      marginLeft: 0,
+                      marginRight: 0,
+                      height: 50,
+                      color: "#5d5d5d",
+                      fontSize: 16,
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      borderRadius: 8,
+                      paddingHorizontal: 12
+                    },
+                    listView: { maxHeight: 220 }
+                  }}
+                  textInputProps={{ placeholderTextColor: "#8c8c8cff" }}
+                  placeholder="Search"
+                  fetchDetails={true}
+                  onPress={(
+                    data: GooglePlaceData,
+                    details: GooglePlaceDetail | null = null
+                  ) => {
+                    addPlaceFromGoogle(data, details);
+                  }}
+                  query={{
+                    key: "AIzaSyCgmp5HOwwIQr_8SuWJQmHzKkQAqkc7SRA",
+                    language: "en"
                   }}
                 />
               )}
-            />
-            <Pressable
-              onPress={() => setPlaceModalOpen(false)}
-              style={styles.modalClose}
-            >
-              <Text style={styles.modalCloseText}>Close</Text>
-            </Pressable>
+              <Controller
+                control={control}
+                name="place_id"
+                render={({ field: { value, onChange } }) => (
+                  <FlatList
+                    data={places}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => {
+                      const selected = item.id === value;
+                      return (
+                        <>
+                          <Pressable
+                            onPress={() => {
+                              onChange(item.id);
+                              setPlaceModalOpen(false);
+                            }}
+                            style={[
+                              styles.modalRow,
+                              selected && styles.modalRowSelected
+                            ]}
+                          >
+                            <Text style={styles.modalRowText}>{item.name}</Text>
+                          </Pressable>
+                        </>
+                      );
+                    }}
+                  />
+                )}
+              />
+              <Pressable
+                onPress={() => setPlaceModalOpen(false)}
+                style={styles.modalClose}
+              >
+                <Text style={styles.modalCloseText}>Close</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
       {/* Subject modal */}
       <Modal visible={subjectModalOpen} animationType="slide" transparent>
@@ -581,135 +693,140 @@ export default function ResultsSessionScreen() {
 
       {/* Task modal */}
       <Modal visible={taskModalOpen} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Select a task</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Select a task</Text>
 
-            {tasks.length === 0 ? (
-              <View style={{ gap: 10 }}>
-                <Text style={styles.emptyHint}>
-                  You don’t have any tasks yet. Create one below.
-                </Text>
-
-                <TextInput
-                  value={newTaskTitle}
-                  onChangeText={setNewTaskTitle}
-                  placeholder="New task title"
-                  placeholderTextColor="#888"
-                  style={styles.modalInput}
-                  autoFocus
-                />
-
-                <Pressable
-                  disabled={creatingTask}
-                  onPress={createTask}
-                  style={[
-                    styles.modalPrimaryButton,
-                    creatingTask && { opacity: 0.7 }
-                  ]}
-                >
-                  <Text style={styles.modalPrimaryButtonText}>
-                    {creatingTask ? "Creating…" : "Create task"}
+              {tasks.length === 0 ? (
+                <View style={{ gap: 10 }}>
+                  <Text style={styles.emptyHint}>
+                    You don’t have any tasks yet. Create one below.
                   </Text>
-                </Pressable>
 
-                <Pressable
-                  onPress={() => {
-                    setTaskModalOpen(false);
-                    setShowCreateTask(false);
-                    setNewTaskTitle("");
-                  }}
-                  style={styles.modalClose}
-                >
-                  <Text style={styles.modalCloseText}>Close</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <Controller
-                control={control}
-                name="task_id"
-                render={({ field: { value, onChange } }) => (
-                  <View style={{ gap: 12 }}>
-                    <FlatList
-                      data={tasks}
-                      keyExtractor={(item) => item.id}
-                      renderItem={({ item }) => {
-                        const selected = item.id === value;
-                        return (
+                  <TextInput
+                    value={newTaskTitle}
+                    onChangeText={setNewTaskTitle}
+                    placeholder="New task title"
+                    placeholderTextColor="#888"
+                    style={styles.modalInput}
+                    autoFocus
+                  />
+
+                  <Pressable
+                    disabled={creatingTask}
+                    onPress={createTask}
+                    style={[
+                      styles.modalPrimaryButton,
+                      creatingTask && { opacity: 0.7 }
+                    ]}
+                  >
+                    <Text style={styles.modalPrimaryButtonText}>
+                      {creatingTask ? "Creating…" : "Create task"}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      setTaskModalOpen(false);
+                      setShowCreateTask(false);
+                      setNewTaskTitle("");
+                    }}
+                    style={styles.modalClose}
+                  >
+                    <Text style={styles.modalCloseText}>Close</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Controller
+                  control={control}
+                  name="task_id"
+                  render={({ field: { value, onChange } }) => (
+                    <View style={{ gap: 12 }}>
+                      <FlatList
+                        data={tasks}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => {
+                          const selected = item.id === value;
+                          return (
+                            <Pressable
+                              onPress={() => {
+                                onChange(item.id);
+                                setTaskModalOpen(false);
+                              }}
+                              style={[
+                                styles.modalRow,
+                                selected && styles.modalRowSelected
+                              ]}
+                            >
+                              <Text style={styles.modalRowText}>
+                                {item.title}
+                              </Text>
+                            </Pressable>
+                          );
+                        }}
+                      />
+
+                      <Pressable
+                        onPress={() => onChange(null)}
+                        style={styles.modalClose}
+                      >
+                        <Text style={styles.modalCloseText}>Clear task</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => setShowCreateTask((v) => !v)}
+                        style={styles.modalClose}
+                      >
+                        <Text style={styles.modalCloseText}>
+                          {showCreateTask ? "Hide create" : "Add new task"}
+                        </Text>
+                      </Pressable>
+
+                      {showCreateTask && (
+                        <View style={{ gap: 10 }}>
+                          <TextInput
+                            value={newTaskTitle}
+                            onChangeText={setNewTaskTitle}
+                            placeholder="New task title"
+                            placeholderTextColor="#888"
+                            style={styles.modalInput}
+                          />
                           <Pressable
-                            onPress={() => {
-                              onChange(item.id);
-                              setTaskModalOpen(false);
-                            }}
+                            disabled={creatingTask}
+                            onPress={createTask}
                             style={[
-                              styles.modalRow,
-                              selected && styles.modalRowSelected
+                              styles.modalPrimaryButton,
+                              creatingTask && { opacity: 0.7 }
                             ]}
                           >
-                            <Text style={styles.modalRowText}>
-                              {item.title}
+                            <Text style={styles.modalPrimaryButtonText}>
+                              {creatingTask ? "Creating…" : "Create task"}
                             </Text>
                           </Pressable>
-                        );
-                      }}
-                    />
+                        </View>
+                      )}
 
-                    <Pressable
-                      onPress={() => onChange(null)}
-                      style={styles.modalClose}
-                    >
-                      <Text style={styles.modalCloseText}>Clear task</Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => setShowCreateTask((v) => !v)}
-                      style={styles.modalClose}
-                    >
-                      <Text style={styles.modalCloseText}>
-                        {showCreateTask ? "Hide create" : "Add new task"}
-                      </Text>
-                    </Pressable>
-
-                    {showCreateTask && (
-                      <View style={{ gap: 10 }}>
-                        <TextInput
-                          value={newTaskTitle}
-                          onChangeText={setNewTaskTitle}
-                          placeholder="New task title"
-                          placeholderTextColor="#888"
-                          style={styles.modalInput}
-                        />
-                        <Pressable
-                          disabled={creatingTask}
-                          onPress={createTask}
-                          style={[
-                            styles.modalPrimaryButton,
-                            creatingTask && { opacity: 0.7 }
-                          ]}
-                        >
-                          <Text style={styles.modalPrimaryButtonText}>
-                            {creatingTask ? "Creating…" : "Create task"}
-                          </Text>
-                        </Pressable>
-                      </View>
-                    )}
-
-                    <Pressable
-                      onPress={() => {
-                        setTaskModalOpen(false);
-                        setShowCreateTask(false);
-                        setNewTaskTitle("");
-                      }}
-                      style={styles.modalClose}
-                    >
-                      <Text style={styles.modalCloseText}>Close</Text>
-                    </Pressable>
-                  </View>
-                )}
-              />
-            )}
+                      <Pressable
+                        onPress={() => {
+                          setTaskModalOpen(false);
+                          setShowCreateTask(false);
+                          setNewTaskTitle("");
+                        }}
+                        style={styles.modalClose}
+                      >
+                        <Text style={styles.modalCloseText}>Close</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                />
+              )}
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -803,7 +920,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     padding: 16,
-    maxHeight: "70%"
+    maxHeight: "85%"
   },
   modalTitle: {
     fontSize: 16,
